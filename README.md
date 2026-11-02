@@ -1,6 +1,13 @@
-# Data Project Documentation Template
+# Hospital Readmission Analysis
 
-A production-ready GitHub template for documenting data analysis, SQL, dashboard, pipeline, and machine learning projects - with built-in examples, narrative guidance, and adaptable structure.
+## Project Overview
+Medicare reduces payments to hospitals with higher-than-expected readmission rates, which makes readmission a financial risk for the hospital systems. This project uses public CMS data to examine which hospital types (by ownership, state, and condiiton) have the highest readmission rates and penalty exposure. The goal is to recommend where a hospital systems quality team should focus first. I’ll join two CMS datasets, clean them, load them into MySql and analyze them with SQL.
+
+## Data Sources
+Readmission data from the CMS release dated august 13, 2026 (measurement period: August 13, 2026 - January 26, 2026, and August 13, 2026 - July 22, 2026).
+
+## Limitations
+Hospital characteristics reflect a later snapshot than the readmissions data, so a few hospital may have changed ownership or status in between.
 
 ## What This Is
 
