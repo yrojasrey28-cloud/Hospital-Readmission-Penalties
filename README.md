@@ -1,77 +1,27 @@
-# Hospital Readmission Analysis
+# Hospital Readmission Reduction Program (HRRP) Analysis
+
+> **Project Status:** Data audit, cleaning pipeline, and SQLite database build complete. Actively running analytical SQL queries and compiling findings.
 
 ## Project Overview
-Medicare reduces payments to hospitals with higher-than-expected readmission rates, which makes readmission a financial risk for the hospital systems. This project uses public CMS data to examine which hospital types (by ownership, state, and condiiton) have the highest readmission rates and penalty exposure. The goal is to recommend where a hospital systems quality team should focus first. I’ll join two CMS datasets, clean them, load them into SQLite and analyze them with SQL.
+Medicare reduces payments to hospitals with higher-than-expected 30-day readmission rates, making excess readmissions a direct financial risk for acute care hospitals. This project uses public Centers for Medicare & Medicaid Services (CMS) data to examine which hospital ownership types, states, and clinical conditions carry the highest excess readmission ratios (`excess_readmission_ratio > 1.0`, used as a proxy for payment penalty exposure). The goal is to recommend where a hospital quality team should focus improvement efforts first.
 
 ## Data Sources
-Readmission data from the CMS release dated august 13, 2026 (measurement period: August 13, 2026 - January 26, 2026, and August 13, 2026 - July 22, 2026).
+* **HRRP Readmissions (CMS):** Public datasets covering the measurement window from *  **August 13, 2026 - January 26,2026** *
+* **Hospital General Information (CMS)** Public dataset covering measurement window from *
+* ** August 13, 2026 - July 22, 2026 *
 
-## Limitations
-Hospital characteristics reflect a later snapshot than the readmissions data, so a few hospital may have changed ownership or status in between.
+## Repository Structure & Pipeline
+* **`docs/data_audit.md`**: Initial data profiling of 18,330 hospital-measure records across 6 clinical conditions, missingness rules, and analytical guardrails.
+* **`src/clean_data.py`**: Joins the two CMS datasets, preserves leading zeros on 6-digit `facility_id` codes (559 IDs), and flags suppressed discharge counts (`counts_suppressed`) without dropping valid ratios.
+* **`src/load_db.py`**: Loads the cleaned dataset into a local SQLite database (`data/processed/hrrp.db`) with explicit `PRIMARY KEY` and `CHECK` constraints, plus post-load type and row-count verification.
+* **`sql/queries.sql` & `src/run_queries.py`**: *(In Progress)* Analytical queries evaluating penalty exposure across conditions, ownership types, and states.
 
-## What This Is
+## How to Run
+From the project root directory, run the pipeline in order to rebuild the local SQLite database:
 
-This is a **cloneable template repository** designed to help data analysts, scientists, and engineers document their projects the way senior practitioners do - with clarity, structure, and storytelling.
+```bash
+# 1. Clean and merge raw CMS datasets
+python src/clean_data.py
 
-Every section includes:
-- Plain-language instructions on what to write
-- Examples of strong vs. weak documentation  
-- Guidance on when to keep or delete a section
-
-It works for **any kind of data project:**
-- SQL analysis
-- Python / R exploratory analysis
-- Dashboards (Tableau, Power BI, Looker)
-- Data pipelines / ETL workflows
-- Machine learning / predictive modeling
-- Mixed-method projects
-
-## Why This Exists
-
-After hundreds of portfolio reviews, the pattern was clear: **the projects that stand out aren't always the most technically sophisticated - they're the ones where the README tells a clear story.**
-
-Most data professionals never learn how to document their work. This template fixes that.
-
-## How to Use It
-
-1. Click **"Use this template"** (green button at the top)
-2. Name your new repo after your actual project
-3. Copy the contents of `README_TEMPLATE.md` into your new project's README
-4. Delete folders and sections you don't need
-5. Remove all placeholder text and comments before publishing
-
-Full walkthrough: [HOW_TO_USE.md](HOW_TO_USE.md)
-
-## What's Inside
-
-The template includes:
-- **README_TEMPLATE.md** - The fill-in-the-blank documentation template
-- **project_metadata.yml** - Optional machine-readable metadata
-- **Complete folder structure** - Pre-built folders for data, notebooks, scripts, queries, reports, visuals, and docs
-- **.gitignore** - Pre-configured to exclude data files
-
-## Who This Is For
-
-- **Beginners** building their first portfolio project
-- **Early-career analysts** cleaning up existing projects
-- **Career switchers** who have technical skills but need to frame their work
-- **Experienced practitioners** who want a consistent structure
-
-## Features
-
-✅ Section-by-section guidance with examples  
-✅ Supports SQL, Python, R, dashboards, pipelines, ML  
-✅ Includes ERD section for SQL projects  
-✅ Pre-built .gitignore for data projects  
-✅ Optional YAML metadata for portfolio automation  
-✅ Delete-what-you-don't-use philosophy  
-
-## License
-
-MIT License - use this however you want.
-
-## Credits
-
-Created by **Issy BI**
-
-If this helped you, consider starring the repo or sharing it with someone building their data portfolio.
+# 2. Build and verify the SQLite database
+python src/load_db.py
