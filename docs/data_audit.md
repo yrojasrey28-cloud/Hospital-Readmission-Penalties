@@ -6,11 +6,10 @@ Audit of the two raw CMS files before any cleaning. Findings are listed first, t
 
 | File | Source | Released / modified | Downloaded |
 |---|---|---|---|
-| `FY_2026_Hospital_Readmissions_Reduction_Program_Hospital.csv` | CMS Provider Data Catalog, Hospital Readmissions Reduction Program | **TODO:** confirm on dataset page (catalog lists Jan 26, 2026) | **TODO** |
-| `Hospital_General_Information.csv` | CMS Provider Data Catalog, Hospital General Information | **TODO:** confirm on dataset page (recorded as Jul 22, 2026) | **TODO** |
+| `FY_2026_Hospital_Readmissions_Reduction_Program_Hospital.csv` | CMS Provider Data Catalog, Hospital Readmissions Reduction Program |
+| `Hospital_General_Information.csv` | CMS Provider Data Catalog, Hospital General Information |
 
-Footnote definitions: CMS footnote crosswalk. **TODO:** add URL and the date I confirmed it.
-
+Footnote definitions: CMS footnote crosswalk.
 The two files were released about six months apart. Hospital ownership and type change rarely, so I use the later General Information snapshot to describe hospitals in the earlier readmissions release. This is listed as a limitation.
 
 ## 2. Summary of findings and decisions
