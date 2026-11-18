@@ -4,8 +4,8 @@ Audit of the two raw CMS files before any cleaning. Findings are listed first, t
 
 ## 1. Sources
 
-| File | Source | Released / modified | Downloaded |
-|---|---|---|---|
+| File | Source |
+|---|---|
 | `FY_2026_Hospital_Readmissions_Reduction_Program_Hospital.csv` | CMS Provider Data Catalog, Hospital Readmissions Reduction Program |
 | `Hospital_General_Information.csv` | CMS Provider Data Catalog, Hospital General Information |
 
