@@ -32,20 +32,28 @@
 -- ratio cannot make a measure look better or worse than it is.
 -- There is only one reporting window (2021-07-01 to 2024-06-30), so this
 -- compares conditions with each other. It is not a trend over time.
+-- Added after the first run: the ratio is centered on 1.0 by design, so about
+-- half of hospitals are above 1.0 for every measure and pct_above_1 barely
+-- separates them (46.8 to 49.9). Severity (avg_ratio_when_above_1) and
+-- pct_usable_suppressed (how much of a measure rests on low-volume hospitals)
+-- are the columns that actually differ, so the results are sorted by severity.
 SELECT
     measure,
     COUNT(*)                                                         AS hospitals_in_program,
     SUM(has_ratio)                                                   AS with_ratio,
     ROUND(100.0 * SUM(has_ratio) / COUNT(*), 1)                      AS pct_with_ratio,
     SUM(counts_suppressed)                                           AS counts_suppressed_rows,
+    ROUND(100.0 * SUM(counts_suppressed) / SUM(has_ratio), 1)        AS pct_usable_suppressed,
     SUM(CASE WHEN excess_readmission_ratio > 1.0 THEN 1 ELSE 0 END)  AS n_above_1,
     ROUND(100.0 * SUM(CASE WHEN excess_readmission_ratio > 1.0 THEN 1 ELSE 0 END)
           / SUM(has_ratio), 1)                                       AS pct_above_1,
     ROUND(AVG(excess_readmission_ratio), 4)                          AS avg_ratio,
+    ROUND(AVG(CASE WHEN excess_readmission_ratio > 1.0
+                   THEN excess_readmission_ratio END), 4)            AS avg_ratio_when_above_1,
     ROUND(MAX(excess_readmission_ratio), 4)                          AS max_ratio
 FROM analysis_table
 GROUP BY measure
-ORDER BY pct_above_1 DESC;
+ORDER BY avg_ratio_when_above_1 DESC;
 
 
 -- Q2: Within each condition, which ownership types have the highest penalty exposure?
@@ -83,7 +91,9 @@ ORDER BY measure, avg_ratio DESC;
 -- hospitals with at least 3 usable measures. That threshold is a documented
 -- choice: it drops hospitals with too little data to summarize. Change the 3 and
 -- rerun to test how sensitive the ranking is.
--- State groups under 50 hospitals are flagged with the same rule as Q2.
+-- States get a three-tier flag: ok (50 or more hospitals), caution (30 to 49)
+-- and do not rank (under 30). The first run flagged 34 of 51 states under the
+-- single 50 cutoff, so one hard cutoff left too little to compare.
 -- Maryland is labelled because the audit notes Maryland hospitals may be
 -- waived from payment adjustments, so its ratio may not mean a penalty.
 WITH hospital_summary AS (
@@ -103,7 +113,9 @@ SELECT
     ROUND(AVG(hospital_avg_ratio), 4)                               AS avg_ratio,
     ROUND(100.0 * SUM(CASE WHEN hospital_avg_ratio > 1.0 THEN 1 ELSE 0 END)
           / COUNT(*), 1)                                            AS pct_hospitals_above_1,
-    CASE WHEN COUNT(*) < 50 THEN 'low n (<50)' ELSE 'ok' END        AS sample_flag,
+    CASE WHEN COUNT(*) >= 50 THEN 'ok'
+         WHEN COUNT(*) >= 30 THEN 'caution (30-49)'
+         ELSE 'do not rank (<30)' END                               AS sample_flag,
     CASE WHEN state = 'MD' THEN 'check payment waiver' ELSE '' END  AS note
 FROM hospital_summary
 GROUP BY state
@@ -137,3 +149,43 @@ FROM analysis_table
 WHERE in_general_info = 1
 GROUP BY hospital_ownership
 ORDER BY pct_no_ratio DESC;
+
+
+-- Q5: Does the Proprietary gap hold inside the same state?
+-- Analyst Thinking: Q2 says Proprietary hospitals run higher, and Q3 says some
+-- states run higher. If Proprietary hospitals are concentrated in high-ratio
+-- states, the ownership gap could really be a state effect. Comparing the two
+-- ownership types inside each state removes that. Only states with at least 15
+-- hospitals of each type are shown, and the same 3-usable-measure rule as Q3 is
+-- used. gap is proprietary minus non-profit private, so a positive gap means
+-- Proprietary is higher in that state. If this returns no rows, check that the
+-- ownership strings match your data exactly.
+WITH hospital_summary AS (
+    SELECT
+        facility_id,
+        state,
+        hospital_ownership,
+        COUNT(*)                        AS usable_measures,
+        AVG(excess_readmission_ratio)   AS hospital_avg_ratio
+    FROM analysis_table
+    WHERE has_ratio = 1
+      AND in_general_info = 1
+      AND hospital_ownership IN ('Proprietary', 'Voluntary non-profit - Private')
+    GROUP BY facility_id, state, hospital_ownership
+    HAVING COUNT(*) >= 3
+)
+SELECT
+    state,
+    SUM(CASE WHEN hospital_ownership = 'Proprietary' THEN 1 ELSE 0 END)   AS n_proprietary,
+    SUM(CASE WHEN hospital_ownership <> 'Proprietary' THEN 1 ELSE 0 END)  AS n_nonprofit_private,
+    ROUND(AVG(CASE WHEN hospital_ownership = 'Proprietary'
+                   THEN hospital_avg_ratio END), 4)                       AS avg_ratio_proprietary,
+    ROUND(AVG(CASE WHEN hospital_ownership <> 'Proprietary'
+                   THEN hospital_avg_ratio END), 4)                       AS avg_ratio_nonprofit_private,
+    ROUND(AVG(CASE WHEN hospital_ownership = 'Proprietary' THEN hospital_avg_ratio END)
+        - AVG(CASE WHEN hospital_ownership <> 'Proprietary' THEN hospital_avg_ratio END), 4) AS gap
+FROM hospital_summary
+GROUP BY state
+HAVING SUM(CASE WHEN hospital_ownership = 'Proprietary' THEN 1 ELSE 0 END) >= 15
+   AND SUM(CASE WHEN hospital_ownership <> 'Proprietary' THEN 1 ELSE 0 END) >= 15
+ORDER BY gap DESC;
