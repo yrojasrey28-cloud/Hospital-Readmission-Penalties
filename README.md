@@ -1,7 +1,5 @@
 # Hospital Readmission Reduction Program (HRRP) Analysis
 
-> **Project Status:** Data audit, cleaning pipeline, and SQLite database build complete. Actively running analytical SQL queries and compiling findings.
-
 ## Project Overview
 Medicare reduces payments to hospitals with higher-than-expected 30-day readmission rates, making excess readmissions a direct financial risk for acute care hospitals. This project uses public Centers for Medicare & Medicaid Services (CMS) data to examine which hospital ownership types, states, and clinical conditions carry the highest excess readmission ratios (`excess_readmission_ratio > 1.0`, used as a proxy for payment penalty exposure). The goal is to recommend where a hospital quality team should focus improvement efforts first.
 
@@ -52,14 +50,12 @@ From the project root directory, run the pipeline in order to rebuild the local 
 python src/clean_data.py
 
 # 2. Build and verify the SQLite database
-python src/load_db.py
+python src/load_db.py 
+```
 
 ## Limitations & Analytical Guardrails
 * **Snapshot Timing Mismatch:** Hospital General Information reflects a later snapshot than the readmissions measurement window, so a small number of hospitals may have changed ownership or operating status in between.
-
 * **Proxy Metric:** The excess_readmission_ratio (predicted divided by expected readmissions) serves as a proxy for Medicare payment penalty exposure rather than the exact dollar penalty.
-
 * **Small Sample & Waiver Rules:** Groups with fewer than 50 hospitals are flagged to avoid drawing conclusions from noisy samples, and Maryland hospitals are evaluated separately due to Maryland's Medicare payment waiver.
-
 * **Date Window** one reporting window (2021-07 to 2024-06)
 * **Query Results** Results cover only hospitals with a reported ratio, and these are associations, not causes (no adjustment for hospital size or patient mix).
